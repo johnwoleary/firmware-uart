@@ -1,0 +1,31 @@
+[*]
+[*] GTKWave Analyzer v3.3.49 (w)1999-2013 BSI
+[*] Fri May  1 15:50:57 2015
+[*]
+[dumpfile] "/nfs/pdx/disks/ccdo.val.work.238/valid/fvcoe/fvcoe_work.2/users/joleary/cbmc/uart/rtl/rtfSimpleUart.vcd"
+[dumpfile_mtime] "Fri May  1 15:47:12 2015"
+[dumpfile_size] 24937
+[savefile] "/nfs/pdx/disks/ccdo.val.work.238/valid/fvcoe/fvcoe_work.2/users/joleary/cbmc/uart/rtl/waves.gtkw"
+[timestart] 0
+[size] 1000 600
+[pos] -1 -1
+*-2.646005 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 192
+[signals_width] 186
+[sst_expanded] 1
+[sst_vpaned_height] 157
+@28
+rtfSimpleUart.\rtfSimpleUart.rst_i
+rtfSimpleUart.\rtfSimpleUart.cyc_i
+rtfSimpleUart.\rtfSimpleUart.stb_i
+@22
+rtfSimpleUart.\rtfSimpleUart.adr_i[31:0]
+rtfSimpleUart.\rtfSimpleUart.dat_i[7:0]
+@28
+rtfSimpleUart.\rtfSimpleUart.ack_o
+@29
+rtfSimpleUart.\rtfSimpleUart.we_i
+@28
+rtfSimpleUart.\rtfSimpleUart.hwfc
+[pattern_trace] 1
+[pattern_trace] 0
