@@ -90,7 +90,7 @@
 		bit 0-4 = mailbox number
 		bit 0,1	= 00
 		bit 2-4	= encoded interrupt value
-		bit 5-6 = not used, reserved
+		bit 5-6 = not used, reservedthat can occur
 		bit 7 = 1 = interrupt pending, 0 = no interrupt
 
 	4	IE	- interrupt enable register (RW)

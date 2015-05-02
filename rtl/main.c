@@ -37,10 +37,9 @@ void wb_write(_u32 addr, _u8 b) {
   rtfSimpleUart.stb_i = 0;
 }
 
-void wb_read(_u32 addr, _u8 *b) {
+_u8 wb_read(_u32 addr) {
   // Master presents address, data, asserts CYC and STB, deasserts WE
   rtfSimpleUart.adr_i = addr;
-  rtfSimpleUart.dat_i = b;
   rtfSimpleUart.we_i = 0;
   rtfSimpleUart.cyc_i = 1;
   rtfSimpleUart.stb_i = 1;
@@ -49,15 +48,30 @@ void wb_read(_u32 addr, _u8 *b) {
   // We assume the acknowledge comes right away.
   // NB Wishbone does not guarantee this in general!
   // The simple UART appears to derive ack_o combinatorially from stb_i and cyc_i.
-  *b = rtfSimpleUart.dat_o;
+  _u8 b = rtfSimpleUart.dat_o;
   next_timeframe();
   rtfSimpleUart.we_i = 0;
   rtfSimpleUart.cyc_i = 0;
   rtfSimpleUart.stb_i = 0;
+  return b;
 }
 
 // ---------------------------------------------------------------------
-// 
+// Linux-style inb, outb
+// ---------------------------------------------------------------------
+
+typedef unsigned char u8;
+
+unsigned char inb (unsigned long port) {
+  return wb_read(port);
+}
+
+void outb (u8 value, unsigned long port) {
+  wb_write(port, value);
+}
+
+// ---------------------------------------------------------------------
+// UART Firmware
 // ---------------------------------------------------------------------
 
 // UART addresses
@@ -77,52 +91,56 @@ void wb_read(_u32 addr, _u8 *b) {
 #define UART_FC (UART_TR + 12)     // fifo control (RW)
 #define UART_SPR (UART_TR + 15)    // scratchpad (RW)
 
+// ---------------------------------------------------------------------
+// Main test routine
+// ---------------------------------------------------------------------
+
 int main(void) {
 
   wb_reset();
   wb_idle();
   // turn off the interrupts
-  wb_write(UART_IE, 0);
+  outb(0x0, UART_IE);
   wb_idle();
   // turn off hardware flow control
-  wb_write(UART_CR, 0);
+  outb(0x0, UART_CR);
   wb_idle();
 
   // attempt a few writes and reads to the scratchpad
 
   _u8 b;
-  wb_read(UART_SPR, &b); // scratchpad is 0 after reset
+  b = inb(UART_SPR); // scratchpad is 0 after reset
   assert(b == 0);
   wb_idle();
-  wb_write(UART_SPR, 42); // write a value
+  outb(0x42, UART_SPR); // write a value
   wb_idle();
-  wb_read(UART_SPR, &b);  // read it back
-  assert(b == 42);        // same value?
+  b = inb(UART_SPR);  // read it back
+  assert(b == 0x42);        // same value?
   wb_idle();
-  wb_write(UART_SPR, 69); // write a value
+  outb(0x69, UART_SPR); // write a value
   wb_idle();              
-  wb_read(UART_SPR, &b);  // read it back
-  assert(b == 69);        // same?
+  b = inb(UART_SPR);  // read it back
+  assert(b == 0x69);        // same?
 
   // Back to back reads/writes
-  wb_write(UART_SPR,1);
-  wb_read(UART_SPR,&b);
-  assert(b==1);
-  wb_write(UART_SPR,2);
-  wb_read(UART_SPR,&b);
-  assert(b==2);
-  wb_write(UART_SPR,64);
-  wb_read(UART_SPR,&b);
-  assert(b==64);
-  wb_read(UART_SPR,&b);
-  assert(b==64);
-  wb_read(UART_SPR,&b);
-  assert(b==64);
-  wb_write(UART_SPR,10);
-  wb_write(UART_SPR,9);
-  wb_write(UART_SPR,8);
-  wb_read(UART_SPR,&b);
-  assert(b==8);
+  outb(0x01, UART_SPR);
+  b = inb(UART_SPR);
+  assert(b==0x01);
+  outb(0x02, UART_SPR);
+  b = inb(UART_SPR);
+  assert(b==0x02);
+  outb(0x40, UART_SPR);
+  b = inb(UART_SPR);
+  assert(b==0x40);
+  b = inb(UART_SPR);
+  assert(b==0x40);
+  b = inb(UART_SPR);
+  assert(b==0x40);
+  outb(0x0a, UART_SPR);
+  outb(0x09, UART_SPR);
+  outb(0x08, UART_SPR);
+  b = inb(UART_SPR);
+  assert(b==0x08);
 
   return 0;
 }
