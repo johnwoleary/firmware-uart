@@ -58,6 +58,13 @@ _u8 wb_read(_u32 addr) {
 
 // ---------------------------------------------------------------------
 // Linux-style inb, outb
+//
+// Right now, these call wb_read and wb_write directly.
+//
+// If/when we decide to run HW and FW in separate threads,
+// inb/outb would execute in the FW thread, wb_read/wb_write would
+// execute in the hardware thread, and communication between them
+// would be via synchronization or fifo channel.
 // ---------------------------------------------------------------------
 
 typedef unsigned char u8;
