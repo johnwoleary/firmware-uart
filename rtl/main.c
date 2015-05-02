@@ -1,7 +1,9 @@
 #include "rtfSimpleUart.h"
 #include<assert.h>
 
-// Transactions that can occur on the wishbone interface
+// ---------------------------------------------------------------------
+// Transactions on the wishbone interface
+// ---------------------------------------------------------------------
 
 void wb_reset(void) {
   rtfSimpleUart.rst_i = 1;
@@ -54,7 +56,12 @@ void wb_read(_u32 addr, _u8 *b) {
   rtfSimpleUart.stb_i = 0;
 }
 
+// ---------------------------------------------------------------------
+// 
+// ---------------------------------------------------------------------
+
 // UART addresses
+// Some of these are not implemented yet in the opencores UART.
 #define UART_TR 0xffdc0a00         // tx/rx data (RW)
 #define UART_LS (UART_TR + 1)      // line status (RO)
 #define UART_MS (UART_TR + 2)      // modem status (RO)
