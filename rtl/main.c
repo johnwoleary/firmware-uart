@@ -104,6 +104,8 @@ void outb (u8 value, unsigned long port) {
 
 int main(void) {
 
+  _u8 b;
+
   wb_reset();
   wb_idle();
   // turn off the interrupts
@@ -113,9 +115,38 @@ int main(void) {
   outb(0x0, UART_CR);
   wb_idle();
 
+  // ship out a byte through the serial port
+  b = inb(UART_LS);
+  assert(b & 0x40); // tx empty
+  assert(!rtfSimpleUart.dtr_no); // data terminal ready
+  outb(0xab, UART_TR);
+  b = inb(UART_LS);
+  assert(~b & 0x20); // tx full
+  assert(!rtfSimpleUart.dtr_no); // data terminal ready
+  wb_idle();
+  assert(~b & 0x20); // tx full
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  wb_idle();
+  assert(~b && 0x20);
+  assert(0); // fail, so we can get a counterexample and some waveforms.
+
+#ifdef NOPE
   // attempt a few writes and reads to the scratchpad
 
-  _u8 b;
   b = inb(UART_SPR); // scratchpad is 0 after reset
   assert(b == 0);
   wb_idle();
@@ -148,6 +179,7 @@ int main(void) {
   outb(0x08, UART_SPR);
   b = inb(UART_SPR);
   assert(b==0x08);
+#endif
 
   return 0;
 }

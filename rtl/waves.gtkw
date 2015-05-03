@@ -1,17 +1,17 @@
 [*]
 [*] GTKWave Analyzer v3.3.49 (w)1999-2013 BSI
-[*] Fri May  1 15:50:57 2015
+[*] Sun May  3 07:56:08 2015
 [*]
-[dumpfile] "/nfs/pdx/disks/ccdo.val.work.238/valid/fvcoe/fvcoe_work.2/users/joleary/cbmc/uart/rtl/rtfSimpleUart.vcd"
-[dumpfile_mtime] "Fri May  1 15:47:12 2015"
-[dumpfile_size] 24937
-[savefile] "/nfs/pdx/disks/ccdo.val.work.238/valid/fvcoe/fvcoe_work.2/users/joleary/cbmc/uart/rtl/waves.gtkw"
+[dumpfile] "/nfs/pdx/disks/ccdo.val.work.238/valid/fvcoe/fvcoe_work.2/users/joleary/cbmc/firmware-uart/rtl/rtfSimpleUart.vcd"
+[dumpfile_mtime] "Sun May  3 07:50:24 2015"
+[dumpfile_size] 26578
+[savefile] "/nfs/pdx/disks/ccdo.val.work.238/valid/fvcoe/fvcoe_work.2/users/joleary/cbmc/firmware-uart/rtl/waves.gtkw"
 [timestart] 0
 [size] 1000 600
 [pos] -1 -1
-*-2.646005 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-3.207884 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [sst_width] 192
-[signals_width] 186
+[signals_width] 204
 [sst_expanded] 1
 [sst_vpaned_height] 157
 @28
@@ -27,5 +27,12 @@ rtfSimpleUart.\rtfSimpleUart.ack_o
 rtfSimpleUart.\rtfSimpleUart.we_i
 @28
 rtfSimpleUart.\rtfSimpleUart.hwfc
+rtfSimpleUart.\rtfSimpleUart.data_present_o
+rtfSimpleUart.\rtfSimpleUart.txd_o
+rtfSimpleUart.\rtfSimpleUart.rxd_i
+rtfSimpleUart.\rtfSimpleUart.cts_ni
+rtfSimpleUart.\rtfSimpleUart.dsr_ni
+rtfSimpleUart.\rtfSimpleUart.dtr_no
+rtfSimpleUart.\rtfSimpleUart.dcd_ni
 [pattern_trace] 1
 [pattern_trace] 0
