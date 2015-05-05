@@ -118,41 +118,41 @@ always @(posedge clk_i)
 	end
 
 `define CNT_FINISH (8'h9F)
-always @(posedge clk_i)
-	if (rst_i) begin
-		cnt <= `CNT_FINISH;
-		rd <= 0;
-		tx_data <= 10'h3FF;
+   always @(posedge clk_i)
+     if (rst_i) begin
+	cnt <= `CNT_FINISH;
+	rd <= 0;
+	tx_data <= 10'h3FF;
         txc <= 1'b1;
         modeX8 <= 1'b0;
+     end
+     else begin
+
+	rd <= 0;
+
+	if (baud16x_ce) begin
+
+	   // Load next data ?
+	   if (cnt==`CNT_FINISH) begin
+              modeX8 <= isX8;
+	      if (!empty && cts) begin
+		 tx_data <= {1'b1,fdo,1'b0};
+		 rd <= 1;
+                 cnt <= modeX8;
+                 txc <= 1'b0;
+	      end
+              else
+                txc <= 1'b1;
+	   end
+	   // Shift the data out. LSB first.
+	   else begin
+              cnt[7:1] <= cnt[7:1] + cnt[0];
+              cnt[0] <= ~cnt[0] | (modeX8);
+
+              if (cnt[3:0]==4'hF)
+                tx_data <= {1'b1,tx_data[9:1]};
+           end
 	end
-	else begin
-
-		rd <= 0;
-
-		if (baud16x_ce) begin
-
-			// Load next data ?
-			if (cnt==`CNT_FINISH) begin
-                modeX8 <= isX8;
-				if (!empty && cts) begin
-					tx_data <= {1'b1,fdo,1'b0};
-					rd <= 1;
-                    cnt <= modeX8;
-                    txc <= 1'b0;
-				end
-                else
-                    txc <= 1'b1;
-			end
-			// Shift the data out. LSB first.
-			else begin
-                cnt[7:1] <= cnt[7:1] + cnt[0];
-                cnt[0] <= ~cnt[0] | (modeX8);
-
-                if (cnt[3:0]==4'hF)
-                    tx_data <= {1'b1,tx_data[9:1]};
-            end
-		end
-	end
+     end
 
 endmodule

@@ -1,5 +1,5 @@
-#include "rtfSimpleUart.h"
 #include<assert.h>
+#include "rtfSimpleUart.h"
 
 // ---------------------------------------------------------------------
 // Transactions on the wishbone interface
@@ -115,6 +115,11 @@ int main(void) {
   outb(0x0, UART_CR);
   wb_idle();
 
+  // Use a really large clk multiplier! (UART_CM0 is ignored)
+  outb (0x80, UART_CM3);
+  outb (0x00, UART_CM2);
+  outb (0x00, UART_CM1);
+
   // ship out a byte through the serial port
   b = inb(UART_LS);
   assert(b & 0x40); // tx empty
@@ -123,25 +128,15 @@ int main(void) {
   b = inb(UART_LS);
   assert(~b & 0x20); // tx full
   assert(!rtfSimpleUart.dtr_no); // data terminal ready
-  wb_idle();
-  assert(~b & 0x20); // tx full
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  wb_idle();
-  assert(~b && 0x20);
+  for (int i = 0; i < 100; i++) 
+    wb_idle();
+  b = inb(UART_LS);
+  assert(b && 0x20); // tx empty
+  outb(0xcd, UART_TR);
+  for (int i = 0; i < 800; i++) 
+    wb_idle();
+  b = inb(UART_LS);
+  assert(b && 0x20); // tx empty
   assert(0); // fail, so we can get a counterexample and some waveforms.
 
 #ifdef NOPE
