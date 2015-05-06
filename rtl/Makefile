@@ -1,6 +1,10 @@
 TOP= rtfSimpleUart
 VERILOG_FILES= $(TOP).v rtfSimpleUart.v rtfSimpleUartTx.v rtfSimpleUartRx.v edge_det.v
-BOUND=800
+BOUND=1000
+
+loopback_int: loopback_int.c $(VERILOG_FILES) $(TOP).h
+	/bin/rm -f $(TOP).vcd
+	hw-cbmc loopback_int.c $(VERILOG_FILES) --module $(TOP) --bound $(BOUND) --vcd $(TOP).vcd
 
 loopback: loopback.c $(VERILOG_FILES) $(TOP).h
 	/bin/rm -f $(TOP).vcd
