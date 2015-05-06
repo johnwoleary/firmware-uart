@@ -129,7 +129,7 @@
 //		bit 0 = receive interrupt (data present)
 //		bit 1 = transmit interrupt (data empty)
 //		bit 3 = modem status (dcd) register change
-//		bit 5-7 = unused, reserved
+//		bit 4-7 = unused, reserved
 //
 //	5	FF	- frame format register		(RW)
 //		this register doesn't do anything in the simpleUart
@@ -139,6 +139,7 @@
 //	6	MC	- modem control register (RW)
 //		bit 0 = dtr signal level output
 //		bit 1 = rts signal level output
+//              bit 4 = internal loopback mode
 //
 //	7	- control register
 //		bit 0 = hardware flow control,
@@ -281,6 +282,7 @@ reg rx_present_ie;
 reg tx_empty_ie;
 reg dcd_ie;
 reg hwfc;			// hardware flow control enable
+reg loopback;    // loopback enabled
 wire clear = cyc_i && stb_i && we_i && adr_i[3:0]==4'd13;
 wire frame_err;		// receiver char framing error
 wire over_run;		// receiver over run
@@ -309,6 +311,13 @@ wire [2:0] irqenc =
 wire [7:0] rx_do;
 wire txrx = cs && adr_i[3:0]==4'd0;
 
+wire txd_int;
+wire rxd_int;
+
+// Support for loopback mode
+assign rxd_int = loopback ? txd_int : rxd_i;
+assign txd_o = loopback ? 1'b1 : txd_int;
+
 rtfSimpleUartRx uart_rx0(
 	.rst_i(rst_i),
 	.clk_i(clk_i),
@@ -319,7 +328,7 @@ rtfSimpleUartRx uart_rx0(
 	.dat_o(rx_do),
 	.baud16x_ce(baud16),
 	.clear(clear),
-	.rxd(rxd_i),
+	.rxd(rxd_int),
 	.data_present(data_present_o),
 	.frame_err(frame_err),
 	.overrun(over_run)
@@ -338,7 +347,7 @@ rtfSimpleUartTx uart_tx0(
 	.dat_i(dat_i),
 	.baud16x_ce(baud16),
 	.cts(ctsx[1]|~hwfc),
-	.txd(txd_o),
+	.txd(txd_int),
 	.empty(tx_empty)
         // JO unconnected:
         , .ack_o()
@@ -350,9 +359,16 @@ rtfSimpleUartTx uart_tx0(
 always @*
 	if (cs) begin
 		case(adr_i[3:0])	// synopsys full_case parallel_case
+		`UART_LS:	dat_o <= {1'b0, tx_empty, tx_empty, 1'b0, frame_err, 1'b0, over_run, data_present_o};
 		`UART_MS:	dat_o <= {dcdx[1],1'b0,dsrx[1],ctsx[1],dcd_chg,3'b0};
 		`UART_IS:	dat_o <= {irq_o, 2'b0, irqenc, 2'b0};
-		`UART_LS:	dat_o <= {1'b0, tx_empty, tx_empty, 1'b0, frame_err, 1'b0, over_run, data_present_o};
+                `UART_IER:      dat_o <= {4'b0000, dcd_ie, 1'b0, tx_empty_ie, rx_present_ie};                
+                `UART_MC:       dat_o <= {3'b000, loopback, 2'b00, ~rts_no, ~dtr_no};
+                `UART_CTRL:     dat_o <= {7'b0000000, hwfc};
+                `UART_CLKM0:    dat_o <= 8'h00;
+                `UART_CLKM1:    dat_o <= ck_mul[7:0];
+                `UART_CLKM2:    dat_o <= ck_mul[15:8];
+                `UART_CLKM3:    dat_o <= ck_mul[23:16];
                 `UART_SPR:	dat_o <= spr;
 		default:	dat_o <= rx_do;
 		endcase
@@ -380,6 +396,7 @@ always @(posedge clk_i) begin
 		dcd_ie <= 1'b0;
 		hwfc <= 1'b1;
 		dtr_no <= ~pDtr;
+                loopback <= 1'b0;
 		ck_mul <= pClkMul;
            	spr <= 8'h00;
 	end
@@ -395,6 +412,7 @@ always @(posedge clk_i) begin
 				begin
 				dtr_no <= ~dat_i[0];
 				rts_no <= ~dat_i[1];
+                                loopback <= dat_i[4];
 				end
 		`UART_CTRL:	hwfc <= dat_i[0];
 		`UART_CLKM1:	ck_mul[7:0] <= dat_i;

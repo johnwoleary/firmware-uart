@@ -109,16 +109,19 @@ int main(void) {
   wb_reset();
   wb_idle();
   // turn off the interrupts
-  outb(0x0, UART_IE);
+  outb(0x03, UART_IE);
   wb_idle();
   // turn off hardware flow control
-  outb(0x0, UART_CR);
+  outb(0x00, UART_CR);
   wb_idle();
 
   // Use a really large clk multiplier! (UART_CM0 is ignored)
   outb (0x80, UART_CM3);
   outb (0x00, UART_CM2);
   outb (0x00, UART_CM1);
+
+  // Loopback mode!
+  outb (0x13, UART_MC);
 
   // ship out a byte through the serial port
   b = inb(UART_LS);
@@ -134,7 +137,14 @@ int main(void) {
   assert(b && 0x20); // tx empty
   // ship a second byte
   outb(0xcd, UART_TR);
-  for (int i = 0; i < 800; i++) 
+  for (int i = 0; i < 220; i++) 
+    wb_idle();
+  // Check for data ready
+  b = inb(UART_LS);
+  assert(b && 0x01);
+  b = inb(UART_TR);
+  assert(b == 0xab);
+  for (int i = 0; i < 580; i++) 
     wb_idle();
   b = inb(UART_LS);
   assert(b && 0x20); // tx empty
