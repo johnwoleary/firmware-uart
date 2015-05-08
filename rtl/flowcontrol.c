@@ -115,11 +115,11 @@ int main(void) {
   outb (0x80, UART_CM3); // Hella big clock multiplier!
   outb (0x00, UART_CM2);
   outb (0x00, UART_CM1);
-  outb (0x00, UART_CR);  // no:  hardware flow control
-  outb (0x03, UART_IE);  // yes: tx_empty and rx_data interrupts 
+  //  outb (0x00, UART_CR);  // no:  hardware flow control
+  outb (0x02, UART_IE);  // yes: tx_empty interrupts 
 
-  // Now the Uart is configured in loopback mode with both tx_empty and
-  // rx_data interrupts enabled. We just have to wait for the first
+  // Now the Uart is configured in loopback mode with tx_empty
+  // interrupts enabled. We just have to wait for the first
   // interrupt, which will be a tx interrupt, and start sending and
   // receiving data.
 
@@ -127,7 +127,7 @@ int main(void) {
   _u8 *tx_b=msg, rx_b=0, istatus = 0;
   int i;
 
-  for (i=0; i<1990; i++) {
+  for (i=0; i<390; i++) {
 
     if (rtfSimpleUart.irq_o) {
 
@@ -138,7 +138,10 @@ int main(void) {
         tx_b++;
       } else { // istatus==0x04
         // it was an rx_data interrupt
+  /*
         rx_b = inb(UART_TR);
+  */
+        wb_idle();
       }
 
     } else {
@@ -151,6 +154,13 @@ int main(void) {
     }
 
   }
+
+  rx_b = inb(UART_TR);
+  wb_idle();
+  rx_b = inb(UART_TR);
+  wb_idle();
+  rx_b = inb(UART_TR);
+  wb_idle();
 
   // Failing assertion, so as to generate some waveforms
   assert(0);

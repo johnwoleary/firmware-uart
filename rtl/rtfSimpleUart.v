@@ -317,6 +317,20 @@ wire rxd_int;
 // Support for loopback mode
 assign rxd_int = loopback ? txd_int : rxd_i;
 assign txd_o = loopback ? 1'b1 : txd_int;
+wire cts_nint;
+assign cts_nint = loopback ? data_present_o : cts_ni;
+/*
+wire rts_nint;
+wire cts_nint;
+assign cts_nint = loopback ? rts_nint : cts_ni;
+assign rts_no = loopback ? 1'b1 : rts_nint;
+assign dsr_nint = loopback ? dtr_nint : dsr_ni;
+assign dtr_no = loopback? 1'b1 : dtr_nint;
+JO: dtr_no and rts_no are controlled by two bits in UART_MC
+JO: the Tx partition 
+JO: How does this work "for real"?
+JO: dsr_ni
+*/
 
 rtfSimpleUartRx uart_rx0(
 	.rst_i(rst_i),
@@ -428,7 +442,7 @@ end
 
 // synchronize external signals
 always @(posedge clk_i)
-	ctsx <= {ctsx[0],~cts_ni};
+	ctsx <= {ctsx[0],~cts_nint};
 
 always @(posedge clk_i)
 	dcdx <= {dcdx[0],~dcd_ni};

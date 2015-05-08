@@ -126,11 +126,11 @@ int main(void) {
   // ship out a byte through the serial port
   b = inb(UART_LS);
   assert(b & 0x40); // tx empty
-  assert(!rtfSimpleUart.dtr_no); // data terminal ready
+
   outb(0xab, UART_TR);
   b = inb(UART_LS);
   assert(~b & 0x20); // tx full
-  assert(!rtfSimpleUart.dtr_no); // data terminal ready
+
   for (int i = 0; i < 100; i++) 
     wb_idle();
   b = inb(UART_LS);

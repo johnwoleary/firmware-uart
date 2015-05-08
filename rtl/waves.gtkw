@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.49 (w)1999-2013 BSI
-[*] Wed May  6 20:06:38 2015
+[*] Thu May  7 15:57:55 2015
 [*]
 [dumpfile] "/nfs/pdx/disks/ccdo.val.work.238/valid/fvcoe/fvcoe_work.2/users/joleary/cbmc/firmware-uart/rtl/rtfSimpleUart.vcd"
-[dumpfile_mtime] "Wed May  6 20:01:42 2015"
-[dumpfile_size] 401548
+[dumpfile_mtime] "Thu May  7 13:34:26 2015"
+[dumpfile_size] 1139586
 [savefile] "/nfs/pdx/disks/ccdo.val.work.238/valid/fvcoe/fvcoe_work.2/users/joleary/cbmc/firmware-uart/rtl/waves.gtkw"
-[timestart] 286
+[timestart] 634
 [size] 1592 825
 [pos] -1 -1
-*-4.207884 329 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-2.207884 643 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] rtfSimpleUart.
 [sst_width] 256
 [signals_width] 318
@@ -21,15 +21,18 @@
 rtfSimpleUart.\rtfSimpleUart.rst_i
 rtfSimpleUart.\rtfSimpleUart.cyc_i
 rtfSimpleUart.\rtfSimpleUart.stb_i
+rtfSimpleUart.\rtfSimpleUart.ack_o
 @22
 rtfSimpleUart.\rtfSimpleUart.adr_i[31:0]
+@820
+[color] 5
 rtfSimpleUart.\rtfSimpleUart.dat_i[7:0]
 @28
-rtfSimpleUart.\rtfSimpleUart.ack_o
 rtfSimpleUart.\rtfSimpleUart.we_i
-@22
+@820
+[color] 1
 rtfSimpleUart.\rtfSimpleUart.dat_o[7:0]
-@28
+@29
 rtfSimpleUart.\rtfSimpleUart.irq_o
 @1000200
 -WB Interface
@@ -40,5 +43,15 @@ rtfSimpleUart.\rtfSimpleUart.txd_o
 rtfSimpleUart.\rtfSimpleUart.rxd_i
 @1000200
 -Serial Data
+@800200
+-Loopback data
+@28
+rtfSimpleUart.\rtfSimpleUart.txd_int
+rtfSimpleUart.\rtfSimpleUart.rxd_int
+@1000200
+-Loopback data
+@28
+rtfSimpleUart.\rtfSimpleUart.irqenc[2:0]
+rtfSimpleUart.\rtfSimpleUart.data_present_o
 [pattern_trace] 1
 [pattern_trace] 0
