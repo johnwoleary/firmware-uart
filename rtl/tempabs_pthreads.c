@@ -1,9 +1,73 @@
-#include<assert.h>
-#include <string.h>
+#include <stdio.h>
+#include <pthread.h> 
+#include <assert.h>
 #include "rtfSimpleUart.h"
+
+// Two-threaded model: FW in one thread, HW in the other
+
+// ---------------------------------------------------------------------
+// Channels to communicate between threads
+// ---------------------------------------------------------------------
+
+typedef struct pthread_chan_s {
+  _Bool req;
+  _Bool ack;
+  unsigned char command;
+  unsigned char address;
+  unsigned char payload;
+} pthread_chan_t;
+
+void pthread_chan_init (pthread_chan_t *ch) {
+  __CPROVER_HIDE:;
+  ch->req = 0;
+  ch->ack = 0;
+}
+
+void pthread_chan_destroy (pthread_chan_t *ch) {
+}
+
+// Models a one-place buffer.
+// Send blocks if there's an unreceived message.
+inline void pthread_chan_send (pthread_chan_t *ch, unsigned char command, unsigned char address, unsigned char payload) {
+  __CPROVER_HIDE:;
+  __CPROVER_atomic_begin();
+  __CPROVER_assume(ch->req == ch->ack);
+  ch->command = command;
+  ch->address = address;
+  ch->payload = payload;
+  ch->req = !ch->req;
+  __CPROVER_atomic_end();
+}
+
+// Receive - blocks if there is no message.
+inline void pthread_chan_recv (pthread_chan_t *ch, unsigned char *command, unsigned char *address, unsigned char *payload) {
+  __CPROVER_HIDE:;
+  __CPROVER_atomic_begin();
+  __CPROVER_assume(ch->req != ch->ack);
+  *command = ch->command;
+  *address = ch->address;
+  *payload = ch->payload;
+  ch->ack = !ch->ack;
+  __CPROVER_atomic_end();
+}
+
+// Probe: returns 1 iff there's a message waiting.
+inline _Bool pthread_chan_probe (pthread_chan_t *ch) {
+  __CPROVER_HIDE:;
+  return (ch->req != ch->ack);
+}
+
+// Wait: wait until given condition is true
+inline void pthread_event_wait (_Bool ev) {
+  __CPROVER_HIDE:;
+  __CPROVER_assume(ev);
+}
 
 // ---------------------------------------------------------------------
 // Transactions on the wishbone interface
+// These are clock-aware; note that each function in the wb_* familty
+// makes one call to next_timeframe. Each, therefore, corresponds
+// to one clock cycle.
 // ---------------------------------------------------------------------
 
 void wb_reset(void) {
@@ -58,9 +122,41 @@ _u8 wb_read(_u32 addr) {
 }
 
 // ---------------------------------------------------------------------
+// Temporal abstraction layer
+// ---------------------------------------------------------------------
+
+pthread_chan_t fw2hw;
+pthread_chan_t hw2fw;
+
+void *
+hw_thread(void *arg) {
+  int i;
+  unsigned char cmd = 0;
+  unsigned char addr = 0;
+  unsigned char data = 0;
+
+  for (i=0; i<3; i++) {
+    if (pthread_chan_probe(&fw2hw)) {
+      pthread_chan_recv(&fw2hw, &cmd, &addr, &data);
+      switch (cmd) {
+      case 0: 
+        wb_reset();
+        break;
+      case 1:
+        wb_write(0xffdc0a00 | addr, data);
+        break;
+      default:
+        wb_idle();
+        break;
+      }
+    } else {
+      wb_idle();
+    }
+  }
+}
+
+// ---------------------------------------------------------------------
 // Linux-style inb, outb
-//
-// Right now, these call wb_read and wb_write directly.
 //
 // If/when we decide to run HW and FW in separate threads,
 // inb/outb would execute in the FW thread, wb_read/wb_write would
@@ -71,11 +167,16 @@ _u8 wb_read(_u32 addr) {
 typedef unsigned char u8;
 
 unsigned char inb (unsigned long port) {
-  return wb_read(port);
+  //  return wb_read(port);
+  return 0;
+}
+
+void reset (void) {
+  pthread_chan_send(&fw2hw, 0, 0, 0);
 }
 
 void outb (u8 value, unsigned long port) {
-  wb_write(port, value);
+  pthread_chan_send(&fw2hw, 1, port & 0x0000000f, value);
 }
 
 // ---------------------------------------------------------------------
@@ -99,68 +200,36 @@ void outb (u8 value, unsigned long port) {
 #define UART_FC (UART_TR + 12)     // fifo control (RW)
 #define UART_SPR (UART_TR + 15)    // scratchpad (RW)
 
+void *
+fw_thread(void *arg) {
+  reset();
+  outb(42,UART_SPR);
+  outb(69,UART_SPR);
+}
+
 // ---------------------------------------------------------------------
-// Main test routine
+// Test code
 // ---------------------------------------------------------------------
 
-int main(void) {
+int
+main(void)
+{
+  pthread_t t[2];
 
-  // Reset
+  pthread_chan_init(&fw2hw);
+  pthread_chan_init(&hw2fw);
 
-  wb_reset();
-  wb_idle();
+  pthread_create(&t[0], 0, hw_thread, 0);
+  pthread_create(&t[1], 0, fw_thread, 0);
+  
+  pthread_join(t[0], 0);
+  pthread_join(t[1], 0);
+  
+  pthread_chan_destroy(&fw2hw);
+  pthread_chan_destroy(&hw2fw);
 
-  // Configure the uart
-
-  outb (0x13, UART_MC);  // Loopback mode
-  outb (0x80, UART_CM3); // Hella big clock multiplier!
-  outb (0x00, UART_CM2);
-  outb (0x00, UART_CM1);
-  outb (0x00, UART_CR);  // no:  hardware flow control
-  outb (0x03, UART_IE);  // yes: tx_empty and rx_data interrupts 
-
-  // Now the Uart is configured in loopback mode with both tx_empty and
-  // rx_data interrupts enabled. We just have to wait for the first
-  // interrupt, which will be a tx interrupt, and start sending and
-  // receiving data.
-
-  unsigned char txmsg[12] = "Hello world";
-  unsigned char rxmsg[12] = "0123456789a";
-  _u8 istatus = 0;
-  int i;
-  int j=0, k=0;
-
-  for (i=0; i<1990; i++) {
-
-    if (rtfSimpleUart.irq_o && k<12) {
-
-      istatus = inb(UART_IS) & 0x0c;
-      if (istatus == 0x0c) {
-        // it was a tx_empty interrupt
-        outb(txmsg[j], UART_TR);
-        j++;
-      } else { // istatus==0x04
-        // it was an rx_data interrupt
-        rxmsg[k] = inb(UART_TR);
-        k++;
-      }
-
-    } else {
-
-      // no interrupt. 
-      // Note, same number of RTL clocks in each arm of if
-      wb_idle();
-      wb_idle();
-
-    }
-
-  }
-
-  for(k=0; k<12; k++)
-    assert(rxmsg[k] == txmsg[k]);
-  assert(rxmsg[11] == '\0');
-  // Failing assertion, so as to generate some waveforms
-  //assert(0);
-
+  assert(0);
+  
   return 0;
 }
+

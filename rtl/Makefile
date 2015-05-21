@@ -5,6 +5,10 @@ tempabs: tempabs.c $(VERILOG_FILES) $(TOP).h
 	/bin/rm -f $(TOP).vcd
 	hw-cbmc tempabs.c $(VERILOG_FILES) --module $(TOP) --bound 40 --vcd $(TOP).vcd
 
+tempabs_pthreads: tempabs_pthreads.c $(VERILOG_FILES) $(TOP).h
+	/bin/rm -f $(TOP).vcd
+	hw-cbmc tempabs_pthreads.c $(VERILOG_FILES) --module $(TOP) --bound 40 --vcd $(TOP).vcd
+
 flowcontrol: flowcontrol.c $(VERILOG_FILES) $(TOP).h
 	/bin/rm -f $(TOP).vcd
 	hw-cbmc flowcontrol.c $(VERILOG_FILES) --module $(TOP) --bound 800 --vcd $(TOP).vcd
