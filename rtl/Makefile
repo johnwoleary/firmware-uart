@@ -1,6 +1,10 @@
 TOP= rtfSimpleUart
 VERILOG_FILES= $(TOP).v rtfSimpleUart.v rtfSimpleUartTx.v rtfSimpleUartRx.v edge_det.v
 
+tempabs: tempabs.c $(VERILOG_FILES) $(TOP).h
+	/bin/rm -f $(TOP).vcd
+	hw-cbmc tempabs.c $(VERILOG_FILES) --module $(TOP) --bound 40 --vcd $(TOP).vcd
+
 flowcontrol: flowcontrol.c $(VERILOG_FILES) $(TOP).h
 	/bin/rm -f $(TOP).vcd
 	hw-cbmc flowcontrol.c $(VERILOG_FILES) --module $(TOP) --bound 800 --vcd $(TOP).vcd

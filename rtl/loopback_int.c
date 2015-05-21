@@ -1,4 +1,5 @@
 #include<assert.h>
+#include <string.h>
 #include "rtfSimpleUart.h"
 
 // ---------------------------------------------------------------------
@@ -123,22 +124,25 @@ int main(void) {
   // interrupt, which will be a tx interrupt, and start sending and
   // receiving data.
 
-  char *msg = "Hello world";
-  _u8 *tx_b=msg, rx_b=0, istatus = 0;
+  unsigned char txmsg[12] = "Hello world";
+  unsigned char rxmsg[12] = "0123456789a";
+  _u8 istatus = 0;
   int i;
+  int j=0, k=0;
 
   for (i=0; i<1990; i++) {
 
-    if (rtfSimpleUart.irq_o) {
+    if (rtfSimpleUart.irq_o && k<12) {
 
       istatus = inb(UART_IS) & 0x0c;
       if (istatus == 0x0c) {
         // it was a tx_empty interrupt
-        outb(*tx_b, UART_TR);
-        tx_b++;
+        outb(txmsg[j], UART_TR);
+        j++;
       } else { // istatus==0x04
         // it was an rx_data interrupt
-        rx_b = inb(UART_TR);
+        rxmsg[k] = inb(UART_TR);
+        k++;
       }
 
     } else {
@@ -152,8 +156,10 @@ int main(void) {
 
   }
 
+  for(k=0; k<12; k++)
+    assert(rxmsg[k] == txmsg[k]);
   // Failing assertion, so as to generate some waveforms
-  assert(0);
+  //assert(0);
 
   return 0;
 }
